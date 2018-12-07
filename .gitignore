@@ -75,3 +75,11 @@ Plugins/*/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+/Content/InfinityBladeEffects
+/Content/InfinityBladeGrassLands
+/Content/InfinityBladeWarriors
+/Content/MixamoAnimPack
+/Content/ParagonBoris
+/Content/ParagonRiktor
+/Content/StarterContent
+/Content/ParagonPhase
