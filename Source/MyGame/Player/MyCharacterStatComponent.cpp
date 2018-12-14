@@ -33,12 +33,10 @@ void UMyCharacterStatComponent::InitializeComponent()
 	MYCHECK(myGameInstace != nullptr);
 	StatData = myGameInstace->GetMyCharacterData();
 	MYCHECK(StatData != nullptr);
-	_hp = StatData->PlayerHP;
 
 	auto myCharacter = Cast<AMyCharacter>(GetOwner());
 	if (myCharacter != nullptr) myCharacter->GetCharacterMovement()->JumpZVelocity = GetJumpPower();
 }
-
 
 // Called every frame
 void UMyCharacterStatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -46,24 +44,6 @@ void UMyCharacterStatComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
-}
-
-float UMyCharacterStatComponent::TakeDamage(float damage)
-{
-	_hp = FMath::Clamp(_hp - damage, 0.0f, StatData->PlayerHP);
-	OnHPChanged.Broadcast();
-	if (_hp <= KINDA_SMALL_NUMBER) OnDie.Broadcast();
-	return _hp;
-}
-
-float UMyCharacterStatComponent::GetHp()
-{
-	return _hp;
-}
-
-float UMyCharacterStatComponent::GetHpRate()
-{
-	return _hp / StatData->PlayerHP;
 }
 
 float UMyCharacterStatComponent::GetAttackDamage()
@@ -96,3 +76,7 @@ float UMyCharacterStatComponent::GetDashRadiusRange()
 	return StatData->PlayerDashRadiusRange;
 }
 
+float UMyCharacterStatComponent::GetMaxHp()
+{
+	return StatData->PlayerHP;
+}

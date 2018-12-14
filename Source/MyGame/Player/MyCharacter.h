@@ -41,6 +41,9 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = Stat)
 	class UMyCharacterStatComponent* CharacterStat;
 
+	UPROPERTY(VisibleAnywhere, Category = Stat)
+	class UHPComponent* HpComponent;
+
 	UPROPERTY()
 	TSubclassOf<class UUserWidget> wHUD;
 

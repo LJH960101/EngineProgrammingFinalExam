@@ -2,13 +2,14 @@
 
 #include "MyCharacterHPWidget.h"
 #include "Components/ProgressBar.h"
+#include "Common/HPComponent.h"
 
-void UMyCharacterHPWidget::BindCharacterStat(UMyCharacterStatComponent* NewCharacterStat)
+void UMyCharacterHPWidget::BindCharacterStat(UHPComponent* NewHpComponent)
 {
-	MYCHECK(nullptr != NewCharacterStat);
+	MYCHECK(nullptr != NewHpComponent);
 
-	StatData = NewCharacterStat;
-	NewCharacterStat->OnHPChanged.AddUObject(this, &UMyCharacterHPWidget::UpdateHPWidget);
+	HPData = NewHpComponent;
+	NewHpComponent->OnHPChanged.AddUObject(this, &UMyCharacterHPWidget::UpdateHPWidget);
 }
 
 void UMyCharacterHPWidget::NativeConstruct()
@@ -21,9 +22,9 @@ void UMyCharacterHPWidget::NativeConstruct()
 
 void UMyCharacterHPWidget::UpdateHPWidget()
 {
-	if (StatData.IsValid()) {
+	if (HPData.IsValid()) {
 		if (nullptr != HPProgressBar) {
-			HPProgressBar->SetPercent(StatData->GetHpRate());
+			HPProgressBar->SetPercent(HPData->GetHpRate());
 		}
 	}
 }

@@ -8,6 +8,7 @@
 #include "GameFramework//DamageType.h"
 #include "Player/MyCharacterStatComponent.h"
 #include "Player/MyCharacterHPWidget.h"
+#include "Common/HPComponent.h"
 
 // Sets default values
 AMyCharacter::AMyCharacter()
@@ -19,6 +20,7 @@ AMyCharacter::AMyCharacter()
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	CharacterStat = CreateDefaultSubobject<UMyCharacterStatComponent>(TEXT("CharacterStat"));
+	HpComponent = CreateDefaultSubobject<UHPComponent>(TEXT("HpComponent"));
 	HPBarWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("HpBarWidget"));
 
 	// 계층 설정
@@ -42,6 +44,11 @@ AMyCharacter::AMyCharacter()
 
 	HPBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 180.0f));
 	HPBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
+
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
+
+	// 오브젝트를 설정
 	static ConstructorHelpers::FClassFinder<UUserWidget> UI_HPBAR(TEXT("/Game/Widget/CharacterWidget.CharacterWidget_C"));
 	if (UI_HPBAR.Succeeded()) {
 		HPBarWidget->SetWidgetClass(UI_HPBAR.Class);
@@ -49,10 +56,6 @@ AMyCharacter::AMyCharacter()
 	}
 	else MYLOG(Warning, TEXT("Failed to load UI_HPBAR"));
 
-	GetCharacterMovement()->bOrientRotationToMovement = true;
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
-
-	// 오브젝트를 설정
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_PHASE(TEXT("/Game/ParagonPhase/Characters/Heroes/Phase/Meshes/Phase_GDC.Phase_GDC"));
 	if (SK_PHASE.Succeeded()) {
 		GetMesh()->SetSkeletalMesh(SK_PHASE.Object);
@@ -75,7 +78,7 @@ AMyCharacter::AMyCharacter()
 
 float AMyCharacter::GetHPRate()
 {
-	return CharacterStat->GetHpRate();
+	return HpComponent->GetHpRate();
 }
 
 void AMyCharacter::Die()
@@ -156,9 +159,11 @@ void AMyCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	auto CharacterWidget = Cast<UMyCharacterHPWidget>(HPBarWidget->GetUserWidgetObject());
-	if (nullptr != CharacterWidget) {
-		CharacterWidget->BindCharacterStat(CharacterStat);
-	}
+	MYCHECK(CharacterWidget != nullptr);
+	MYCHECK(HpComponent != nullptr);
+	MYCHECK(CharacterStat != nullptr);
+	CharacterWidget->BindCharacterStat(HpComponent);
+	HpComponent->SetMaxHP(CharacterStat->GetMaxHp());
 }
 
 // Called every frame
@@ -186,12 +191,12 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, AController * EventInstigator, AActor * DamageCauser)
 {
-	return CharacterStat->TakeDamage(DamageAmount);
+	return HpComponent->TakeDamage(DamageAmount);
 }
 
 void AMyCharacter::Test()
 {
-	CharacterStat->TakeDamage(5.0f);
+	HpComponent->TakeDamage(5.0f);
 }
 
 void AMyCharacter::Dash()
@@ -239,14 +244,14 @@ void AMyCharacter::PostInitializeComponents()
 	});
 
 	// 죽음 함수 바인딩
-	CharacterStat->OnDie.AddUObject(this, &AMyCharacter::Die);
+	HpComponent->OnDie.AddUObject(this, &AMyCharacter::Die);
 
 	// 공격 람다 바인딩
 	MyAnim->OnAttack.AddLambda([this]() -> void {
 		FVector spawnLocation = GetActorLocation() + GetActorForwardVector() * 100.0f;
 
 		AMyBullet* myBullet = GetWorld()->SpawnActor<AMyBullet>(AMyBullet::StaticClass(), spawnLocation, GetControlRotation());
-		myBullet->SetOwner(this);
+		myBullet->SetOwnerPlayer(this);
 		myBullet->SetSpeed(this->CharacterStat->GetBulletSpeed());
 		myBullet->SetDamage(this->CharacterStat->GetAttackDamage());
 		myBullet->GetSphereCP()->IgnoreActorWhenMoving(this, true);

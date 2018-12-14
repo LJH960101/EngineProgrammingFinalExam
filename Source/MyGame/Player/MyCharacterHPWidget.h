@@ -4,26 +4,27 @@
 
 #include "MyGame.h"
 #include "Blueprint/UserWidget.h"
-#include "Player/MyCharacterStatComponent.h"
 #include "MyCharacterHPWidget.generated.h"
 
 /**
  * 
  */
+class UHPComponent;
+
 UCLASS()
 class MYGAME_API UMyCharacterHPWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	
 public:
-	void BindCharacterStat(UMyCharacterStatComponent* NewCharacterStat);
+	void BindCharacterStat(UHPComponent* NewHpComponent);
 
 protected:
 	virtual void NativeConstruct() override;
 	void UpdateHPWidget();
 
 private:
-	TWeakObjectPtr<UMyCharacterStatComponent> StatData;
+	TWeakObjectPtr<UHPComponent> HPData;
 
 	UPROPERTY()
 	class UProgressBar* HPProgressBar;

@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "NPC.generated.h"
+#include "Monster.generated.h"
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
-class UNPC : public UInterface
+class UMonster : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -16,7 +16,7 @@ class UNPC : public UInterface
 /**
  * 
  */
-class MYGAME_API INPC
+class MYGAME_API IMonster
 {
 	GENERATED_BODY()
 

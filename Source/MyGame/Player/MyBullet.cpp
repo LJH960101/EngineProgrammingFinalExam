@@ -2,7 +2,7 @@
 
 #include "MyBullet.h"
 #include "Engine/World.h"
-#include "Monster/NPC.h"
+#include "Monster/Monster.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "GameFramework/GameSession.h"
 
@@ -30,6 +30,9 @@ AMyBullet::AMyBullet()
 
 	static ConstructorHelpers::FObjectFinder<UParticleSystem> PT_EXPLOSION(TEXT("/Game/InfinityBladeEffects/Effects/FX_Treasure/Resources/P_OrePile_Explosion_Basic.P_OrePile_Explosion_Basic"));
 	ExprosionParticle = PT_EXPLOSION.Object;
+
+	static ConstructorHelpers::FObjectFinder<USoundWave> explosionSoundCue(TEXT("/Game/StarterContent/Audio/Explosion02.Explosion02"));
+	ExpSoundWave = explosionSoundCue.Object;
 
 	// 컴포넌트 설정
 	ProjectileMovementComponent->InitialSpeed = 1000.0f;
@@ -62,7 +65,7 @@ void AMyBullet::SetSpeed(float speed)
 	ProjectileMovementComponent->InitialSpeed = speed;
 }
 
-void AMyBullet::SetOwner(APawn* owningActor)
+void AMyBullet::SetOwnerPlayer(APawn* owningActor)
 {
 	owner = owningActor;
 }
@@ -76,7 +79,7 @@ void AMyBullet::OnComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherA
 {
 	auto Pawn = Cast<APawn>(OtherActor);
 	if (Pawn != nullptr) {
-		if (Cast<INPC>(OtherActor) != nullptr) {
+		if (Cast<IMonster>(OtherActor) != nullptr) {
 			// 몬스터가 맞았다면 피해를 입힌다.
 			if (owner == nullptr) return;
 
@@ -87,5 +90,6 @@ void AMyBullet::OnComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherA
 
 	// 파티클을 터트리고 삭제함.
 	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExprosionParticle, Hit.Location, GetActorRotation(), true);
+	UGameplayStatics::PlaySoundAtLocation(GetWorld(), ExpSoundWave, GetActorLocation());
 	Destroy();
 }

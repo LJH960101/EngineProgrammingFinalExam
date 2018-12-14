@@ -23,6 +23,8 @@ private:
 	UParticleSystem* ExprosionParticle;
 	float _damage = 1.0f;
 	APawn* owner;
+	UPROPERTY()
+	class USoundWave* ExpSoundWave;
 
 	// Method
 public:	
@@ -38,7 +40,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	void SetDamage(float damage);
-	void SetOwner(APawn* owningActor);
+	void SetOwnerPlayer(APawn* owningActor);
 	void SetSpeed(float speed);
 	USphereComponent* GetSphereCP();
 
