@@ -10,6 +10,7 @@
  * 
  */
 class UHPComponent;
+class UMyCharacterStatComponent;
 
 UCLASS()
 class MYGAME_API UMyCharacterHPWidget : public UUserWidget
@@ -17,7 +18,7 @@ class MYGAME_API UMyCharacterHPWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	void BindCharacterStat(UHPComponent* NewHpComponent);
+	void BindCharacterStat(UHPComponent* NewHpComponent, UMyCharacterStatComponent* NewStatComponent);
 
 protected:
 	virtual void NativeConstruct() override;
@@ -25,7 +26,13 @@ protected:
 
 private:
 	TWeakObjectPtr<UHPComponent> HPData;
+	TWeakObjectPtr<UMyCharacterStatComponent> StatData;
 
 	UPROPERTY()
 	class UProgressBar* HPProgressBar;
+
+	UPROPERTY()
+	class UProgressBar* DashProgressBar;
+
+	virtual void NativeTick(const FGeometry& MyGeometry, float DeltaTime) override;
 };

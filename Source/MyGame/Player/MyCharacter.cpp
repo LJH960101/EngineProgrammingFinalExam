@@ -5,9 +5,11 @@
 #include "Components/WidgetComponent.h"
 #include "Player/MyCharacterAnimInstance.h"
 #include "GameEssencil/MyGameInstance.h"
-#include "GameFramework//DamageType.h"
+#include "GameFramework/DamageType.h"
 #include "Player/MyCharacterStatComponent.h"
+#include "DrawDebugHelpers.h"
 #include "Player/MyCharacterHPWidget.h"
+#include "Doll/Doll.h"
 #include "Common/HPComponent.h"
 
 // Sets default values
@@ -39,7 +41,7 @@ AMyCharacter::AMyCharacter()
 	SpringArm->bInheritPitch = true;
 	SpringArm->bInheritRoll = false;
 	SpringArm->bInheritYaw = true;
-	SpringArm->bDoCollisionTest = true;
+	SpringArm->bDoCollisionTest = false;
 	bUseControllerRotationYaw = false;
 
 	HPBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 180.0f));
@@ -59,6 +61,12 @@ AMyCharacter::AMyCharacter()
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_PHASE(TEXT("/Game/ParagonPhase/Characters/Heroes/Phase/Meshes/Phase_GDC.Phase_GDC"));
 	if (SK_PHASE.Succeeded()) {
 		GetMesh()->SetSkeletalMesh(SK_PHASE.Object);
+	}
+	else MYLOG(Warning, TEXT("Failed to find SK_PHASE"));
+
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> PT_CONTROL(TEXT("/Game/InfinityBladeEffects/Effects/FX_Combat_Base/Enchants/P_Enchant_Cooldowns.P_Enchant_Cooldowns"));
+	if (PT_CONTROL.Succeeded()) {
+		ControlParticle = PT_CONTROL.Object;
 	}
 	else MYLOG(Warning, TEXT("Failed to find SK_PHASE"));
 
@@ -162,8 +170,14 @@ void AMyCharacter::BeginPlay()
 	MYCHECK(CharacterWidget != nullptr);
 	MYCHECK(HpComponent != nullptr);
 	MYCHECK(CharacterStat != nullptr);
-	CharacterWidget->BindCharacterStat(HpComponent);
+	CharacterWidget->BindCharacterStat(HpComponent, CharacterStat);
 	HpComponent->SetMaxHP(CharacterStat->GetMaxHp());
+
+	TArray<AActor*> dolls;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADoll::StaticClass(), dolls);
+	if (dolls.Num() >= 1) {
+		sommonedDoll = Cast<ADoll>(dolls[0]);
+	}
 }
 
 // Called every frame
@@ -187,11 +201,40 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction(TEXT("Attack"), EInputEvent::IE_Pressed, this, &AMyCharacter::Attack);
 	PlayerInputComponent->BindAction(TEXT("Dash"), EInputEvent::IE_Pressed, this, &AMyCharacter::Dash);
 	PlayerInputComponent->BindAction(TEXT("Test"), EInputEvent::IE_Pressed, this, &AMyCharacter::Test);
+	PlayerInputComponent->BindAction(TEXT("ControlDoll"), EInputEvent::IE_Pressed, this, &AMyCharacter::ControlDoll);
 }
 
 float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, AController * EventInstigator, AActor * DamageCauser)
 {
 	return HpComponent->TakeDamage(DamageAmount);
+}
+
+void AMyCharacter::ControlDoll()
+{
+	if (sommonedDoll->GetControlMoveState()) return;
+	auto playerController = Cast<APlayerController>(GetController());
+	if (!playerController) return;
+	FVector startPoint = playerController->GetFocalLocation();
+	FVector endPoint = startPoint + playerController->GetControlRotation().Vector() * 1000.0f;
+
+	FHitResult hitResult;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this);
+	bool DidTrace = GetWorld()->LineTraceSingleByChannel(
+		hitResult,        //result
+		startPoint,        //start
+		endPoint,        //end
+		ECC_Camera,    //collision channel
+		CollisionParams
+	);
+#if ENABLE_DRAW_DEBUG
+	TArray<FHitResult> hits;
+	DrawDebugLine(GetWorld(), startPoint, endPoint, FColor::Red, false, 1.0f);
+#endif
+	if (!DidTrace) return;
+	sommonedDoll->SetControlLocation(hitResult.Location);
+	sommonedDoll->SetControlMoveState(true);
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ControlParticle, hitResult.Location, FRotator::ZeroRotator, true);
 }
 
 void AMyCharacter::Test()
@@ -201,7 +244,7 @@ void AMyCharacter::Test()
 
 void AMyCharacter::Dash()
 {
-	if (IsDashing || IsDie) return;
+	if (IsDashing || IsDie || CharacterStat->GetDashRate() <= 0.9f) return;
 	IsAttacking = false;
 	IsDashing = true;
 	AttackEndComboState();
@@ -211,7 +254,8 @@ void AMyCharacter::Dash()
 	SetActorLocation(GetActorLocation() + moveDir * CharacterStat->GetDashRange());
 	TArray<AActor*> ignoreActors;
 	ignoreActors.Add(this);
-	UGameplayStatics::ApplyRadialDamage(GetWorld(), CharacterStat->GetDashDamage(), GetActorLocation(), CharacterStat->GetDashRadiusRange(), UDamageType::StaticClass(), ignoreActors);
+	CharacterStat->SetDashGauage(0.0f);
+	UGameplayStatics::ApplyRadialDamage(GetWorld(), CharacterStat->GetDashDamage(), GetActorLocation(), CharacterStat->GetDashRadiusRange(), UDamageType::StaticClass(), ignoreActors, this, GetController(), false);
 }
 
 bool AMyCharacter::OnDash()
@@ -249,6 +293,8 @@ void AMyCharacter::PostInitializeComponents()
 	// 공격 람다 바인딩
 	MyAnim->OnAttack.AddLambda([this]() -> void {
 		FVector spawnLocation = GetActorLocation() + GetActorForwardVector() * 100.0f;
+		if(CurrentCombo%2==1) spawnLocation = GetMesh()->GetSocketLocation(FName("hand_r"));
+		else spawnLocation = GetMesh()->GetSocketLocation(FName("hand_l"));
 
 		AMyBullet* myBullet = GetWorld()->SpawnActor<AMyBullet>(AMyBullet::StaticClass(), spawnLocation, GetControlRotation());
 		myBullet->SetOwnerPlayer(this);

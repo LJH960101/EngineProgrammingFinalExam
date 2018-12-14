@@ -77,6 +77,7 @@ USphereComponent* AMyBullet::GetSphereCP()
 
 void AMyBullet::OnComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	if (OtherActor == owner) return;
 	auto Pawn = Cast<APawn>(OtherActor);
 	if (Pawn != nullptr) {
 		if (Cast<IMonster>(OtherActor) != nullptr) {

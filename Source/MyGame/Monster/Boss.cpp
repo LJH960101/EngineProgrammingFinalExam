@@ -15,7 +15,7 @@ ABoss::ABoss()
 
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f),
 		FRotator(0.0f, -90.0f, 0.0f));
-	GetMesh()->SetWorldScale3D(FVector(3.0f, 3.0f, 3.0f));
+	SetActorScale3D(FVector(3.0f, 3.0f, 3.0f));
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
@@ -27,7 +27,7 @@ ABoss::ABoss()
 	}
 	else MYLOG(Warning, TEXT("Failed to find SK_BORIS"));
 
-	static ConstructorHelpers::FClassFinder<UAnimInstance> AB_BORIS(TEXT("/Game/Blueprint/AB_Boris.AB_Boris_C"));
+	static ConstructorHelpers::FClassFinder<UAnimInstance> AB_BORIS(TEXT("/Game/Blueprint/Boris/AB_Boss.AB_Boss_C"));
 	if (AB_BORIS.Succeeded()) {
 		GetMesh()->SetAnimInstanceClass(AB_BORIS.Class);
 	}
@@ -70,5 +70,6 @@ void ABoss::PostInitializeComponents()
 
 float ABoss::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, AController * EventInstigator, AActor * DamageCauser)
 {
+	MYLOG(Warning, TEXT("%f"), HPComponent->GetHp());
 	return HPComponent->TakeDamage(DamageAmount);
 }

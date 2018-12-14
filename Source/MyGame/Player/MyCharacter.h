@@ -47,6 +47,12 @@ private:
 	UPROPERTY()
 	TSubclassOf<class UUserWidget> wHUD;
 
+	UPROPERTY()
+	UParticleSystem* ControlParticle;
+
+	UPROPERTY()
+	class ADoll* sommonedDoll;
+
 public:
 	UPROPERTY(VisibleAnywhere, Category = UI)
 	class UWidgetComponent* HPBarWidget;
@@ -60,6 +66,7 @@ public:
 	// METHOD
 private:
 	void Die();
+	void ControlDoll();
 	void MoveForward(float axis);
 	void MoveRight(float axis);
 	void Turn(float axis);

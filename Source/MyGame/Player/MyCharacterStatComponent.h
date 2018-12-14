@@ -12,6 +12,7 @@ class MYGAME_API UMyCharacterStatComponent : public UActorComponent
 	GENERATED_BODY()
 private:
 	struct FMyCharacterData* StatData = nullptr;
+	float _dashGauage;
 
 public:	
 	// Sets default values for this component's properties
@@ -23,6 +24,8 @@ public:
 	float GetBulletSpeed();
 	float GetDashRange();
 	float GetJumpPower();
+	float GetDashRate();
+	void SetDashGauage(float dashGauae);
 	float GetDashRadiusRange();
 	float GetMaxHp();
 

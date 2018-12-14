@@ -13,7 +13,7 @@ struct FMyCharacterData : public FTableRowBase
 	GENERATED_BODY()
 	
 public:
-	FMyCharacterData() : PlayerHP(10.0f), PlayerAttackDamage(5.0f), PlayerDashDamage(10.0f), PlayerBulletSpeed(100.0f), PlayerDashRange(1000.0f), PlayerJumpPower(800.0f), PlayerDashRadiusRange(200.0f){}
+	FMyCharacterData() : PlayerHP(10.0f), PlayerAttackDamage(5.0f), PlayerDashDamage(10.0f), PlayerBulletSpeed(100.0f), PlayerDashRange(1000.0f), PlayerJumpPower(800.0f), PlayerDashRadiusRange(200.0f), PlayerDashCoolTime(5.0f){}
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data")
 	float PlayerHP;
@@ -35,6 +35,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data")
 	float PlayerDashRadiusRange;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data")
+	float PlayerDashCoolTime;
 };
 
 UCLASS()
