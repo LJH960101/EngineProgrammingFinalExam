@@ -64,7 +64,7 @@ AMyCharacter::AMyCharacter()
 	}
 	else MYLOG(Warning, TEXT("Failed to find SK_PHASE"));
 
-	static ConstructorHelpers::FObjectFinder<UParticleSystem> PT_CONTROL(TEXT("/Game/InfinityBladeEffects/Effects/FX_Combat_Base/Enchants/P_Enchant_Cooldowns.P_Enchant_Cooldowns"));
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> PT_CONTROL(TEXT("/Game/InfinityBladeEffects/Effects/FX_Archive/P_HealthOrb_Pickup.P_HealthOrb_Pickup"));
 	if (PT_CONTROL.Succeeded()) {
 		ControlParticle = PT_CONTROL.Object;
 	}
@@ -92,6 +92,7 @@ float AMyCharacter::GetHPRate()
 void AMyCharacter::Die()
 {
 	IsDie = true;
+	DisableInput(Cast<APlayerController>(GetController()));
 }
 
 void AMyCharacter::MoveForward(float axis)
@@ -206,6 +207,7 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, AController * EventInstigator, AActor * DamageCauser)
 {
+	MYLOG_S(Warning);
 	return HpComponent->TakeDamage(DamageAmount);
 }
 
@@ -232,6 +234,8 @@ void AMyCharacter::ControlDoll()
 	DrawDebugLine(GetWorld(), startPoint, endPoint, FColor::Red, false, 1.0f);
 #endif
 	if (!DidTrace) return;
+	hitResult.Location.Z = 0.0f;
+	sommonedDoll->SetTargetObjectToNull();
 	sommonedDoll->SetControlLocation(hitResult.Location);
 	sommonedDoll->SetControlMoveState(true);
 	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ControlParticle, hitResult.Location, FRotator::ZeroRotator, true);
@@ -301,6 +305,8 @@ void AMyCharacter::PostInitializeComponents()
 		myBullet->SetSpeed(this->CharacterStat->GetBulletSpeed());
 		myBullet->SetDamage(this->CharacterStat->GetAttackDamage());
 		myBullet->GetSphereCP()->IgnoreActorWhenMoving(this, true);
+		GetMesh()->IgnoreActorWhenMoving(myBullet, true);
+		GetCapsuleComponent()->IgnoreActorWhenMoving(myBullet, true);
 	});
 
 	// 대시 종료 람다 바인딩

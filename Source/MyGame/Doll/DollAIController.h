@@ -19,6 +19,7 @@ public:
 	virtual void Possess(APawn* InPawn) override;
 	void SetControlLocation(const FVector & location);
 	void SetControlMoveState(bool isOn);
+	void SetTargetObjectToNull();
 	bool GetControlMoveState();
 
 	static const FName HomePosKey;

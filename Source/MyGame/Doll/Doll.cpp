@@ -8,12 +8,26 @@
 #include "Components/WidgetComponent.h"
 #include "Doll/DollWeapon.h"
 #include "Doll/DollAIController.h"
+#include "Player/MyCharacter.h"
+
+
+// Called every frame
+void ADoll::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	if (onHeartShare) {
+		heartShareTimer -= DeltaTime;
+		if (heartShareTimer <= 0.0f) {
+			onHeartShare = false;
+		}
+	}
+}
 
 // Sets default values
 ADoll::ADoll()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	HpComponent = CreateDefaultSubobject<UHPComponent>(TEXT("HpComponent"));
 
@@ -46,8 +60,14 @@ ADoll::ADoll()
 	
 	AIControllerClass = ADollAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+	heartShareTimer = -100.f;
+	onHeartShare = false;
 }
-
+void ADoll::ActiveHeartShare()
+{
+	heartShareTimer = 5.f;
+	onHeartShare = true;
+}
 void ADoll::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -114,6 +134,12 @@ void ADoll::PostInitializeComponents()
 
 float ADoll::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, AController * EventInstigator, AActor * DamageCauser)
 {
+	if (onHeartShare) {
+		auto playerCharacter = Cast<AMyCharacter>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetPawn());
+		if (playerCharacter != nullptr) {
+			playerCharacter->TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+		}
+	}
 	return HpComponent->TakeDamage(0.0f);
 }
 
@@ -219,4 +245,10 @@ void ADoll::AttackCheck()
 			HitResult.Actor->TakeDamage(1.0f, DamageEvent, GetController(), this);
 		}
 	}
+}
+
+void ADoll::SetTargetObjectToNull()
+{
+	auto dollAiController = Cast<ADollAIController>(GetController());
+	dollAiController->SetTargetObjectToNull();
 }

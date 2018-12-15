@@ -20,11 +20,13 @@ public:
 	static const FName MaxTargetKey;
 	static const FName CurrentStateKey;
 	static const FName OnAttackKey;
+	static const FName OnHalfHpKey;
 	
 public:
 	ABossAIController();
 	virtual void Possess(APawn* InPawn) override;
 	void ChangeOnAttack(bool isOn);
+	void TransTarget();
 	void SetCurrentState(EBossPattern pattern);
 
 private:

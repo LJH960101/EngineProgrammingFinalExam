@@ -2,6 +2,9 @@
 
 #include "MyPlayerController.h"
 #include "Components/WidgetComponent.h"
+#include "Components/ProgressBar.h"
+#include "Common/HPComponent.h"
+#include "Monster/Boss.h"
 
 AMyPlayerController::AMyPlayerController() {
 	static ConstructorHelpers::FClassFinder<UUserWidget> WG_HUD(TEXT("/Game/Widget/HUDWidget.HUDWidget_C"));
@@ -18,10 +21,22 @@ void AMyPlayerController::BeginPlay()
 
 	if (wHUD)
 	{
-		auto myHUD = CreateWidget<UUserWidget>(this, wHUD);
+		myHUD = CreateWidget<UUserWidget>(this, wHUD);
 
 		if (myHUD) {
 			myHUD->AddToViewport();
 		}
 	}
+
+	TArray<AActor*> bosses;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABoss::StaticClass(), bosses);
+	MYCHECK(bosses.Num() != 0);
+	boss = Cast<ABoss>(bosses[0]);
+	boss->OnBossHpChanged.AddUObject(this, &AMyPlayerController::OnChangeBossHp);
+}
+
+void AMyPlayerController::OnChangeBossHp()
+{
+	auto BossHPProgressBar = Cast<UProgressBar>(myHUD->GetWidgetFromName(TEXT("HP_ProgressBar")));
+	BossHPProgressBar->SetPercent(boss->HPComponent->GetHpRate());
 }

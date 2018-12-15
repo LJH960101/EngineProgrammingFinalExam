@@ -17,7 +17,10 @@ class MYGAME_API AMyPlayerController : public APlayerController
 private:
 	UPROPERTY()
 	TSubclassOf<class UUserWidget> wHUD;
-
+	UUserWidget* myHUD;
+	class ABoss* boss;
+	UFUNCTION()
+	void OnChangeBossHp();
 
 protected:
 	// Called when the game starts or when spawned

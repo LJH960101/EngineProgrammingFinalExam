@@ -21,6 +21,8 @@ enum class EBossPattern : uint8
 	BP_Tonado 	UMETA(DisplayName = "Tonado")
 };
 
+DECLARE_MULTICAST_DELEGATE(FOnBossHpChanged);
+
 UCLASS()
 class MYGAME_API ABoss : public ACharacter, public IMonster
 {
@@ -43,14 +45,35 @@ private:
 	class UBossAnimInstance* MyAnim;
 	bool bOnAttack;
 
+
+	UPROPERTY()
+	UParticleSystem* JumpingParticle;
+
+	UPROPERTY()
+	UParticleSystem* GatheringParticle;
+
+	UPROPERTY()
+	UParticleSystem* GatheringFailParticle;
+
+	UPROPERTY()
+	UParticleSystem* ScatterParticle;
+
+	UPROPERTY()
+	UParticleSystem* ScatterImpactParticle;
+
+	UPROPERTY()
+	UParticleSystem* HeartShareParticle;
 private:
 	void Die();
+	void BindAnimationEvents();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:
+	FOnBossHpChanged OnBossHpChanged;
+
 	// Sets default values for this character's properties
 	ABoss();
 

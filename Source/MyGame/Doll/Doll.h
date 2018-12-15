@@ -18,6 +18,9 @@ public:
 	// Sets default values for this character's properties
 	ADoll();
 
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -34,6 +37,8 @@ public:
 	void SetControlLocation(const FVector& location);
 	void SetControlMoveState(bool isOn);
 	bool GetControlMoveState();
+	void SetTargetObjectToNull();
+	void ActiveHeartShare();
 
 	// Called every frame
 	virtual void PostInitializeComponents() override;
@@ -93,4 +98,7 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 	float AttackRadius;
+
+	bool onHeartShare;
+	float heartShareTimer;
 };

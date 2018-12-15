@@ -10,6 +10,7 @@ const FName ABossAIController::MinTargetKey(TEXT("MinTarget"));
 const FName ABossAIController::MaxTargetKey(TEXT("MaxTarget"));
 const FName ABossAIController::CurrentStateKey(TEXT("CurrentState"));
 const FName ABossAIController::OnAttackKey(TEXT("OnAttack"));
+const FName ABossAIController::OnHalfHpKey(TEXT("OnHalfHp"));
 
 ABossAIController::ABossAIController()
 {
@@ -34,6 +35,13 @@ void ABossAIController::SetCurrentState(EBossPattern pattern)
 void ABossAIController::ChangeOnAttack(bool isOn)
 {
 	Blackboard->SetValueAsBool(OnAttackKey, isOn);
+}
+
+void ABossAIController::TransTarget()
+{
+	auto minTarget = Blackboard->GetValueAsObject(MinTargetKey);
+	Blackboard->SetValueAsObject(MinTargetKey, Blackboard->GetValueAsObject(MaxTargetKey));
+	Blackboard->SetValueAsObject(MaxTargetKey, minTarget);
 }
 
 void ABossAIController::Possess(APawn* InPawn)

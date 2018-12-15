@@ -25,7 +25,10 @@ ADollAIController::ADollAIController()
 		BTAsset = BTObject.Object;
 	}
 }
-
+void ADollAIController::SetTargetObjectToNull()
+{
+	Blackboard->SetValueAsObject(TargetKey, nullptr);
+}
 void ADollAIController::SetControlMoveState(bool isOn)
 {
 	Blackboard->SetValueAsBool(OnControlMoveKey, isOn);
