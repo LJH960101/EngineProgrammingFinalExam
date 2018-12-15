@@ -215,7 +215,7 @@ void AMyCharacter::ControlDoll()
 	auto playerController = Cast<APlayerController>(GetController());
 	if (!playerController) return;
 	FVector startPoint = playerController->GetFocalLocation();
-	FVector endPoint = startPoint + playerController->GetControlRotation().Vector() * 1000.0f;
+	FVector endPoint = startPoint + playerController->GetControlRotation().Vector() * 3000.0f;
 
 	FHitResult hitResult;
 	FCollisionQueryParams CollisionParams;

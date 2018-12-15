@@ -43,7 +43,7 @@ ADoll::ADoll()
 
 	AttackRange = 200.0f;
 	AttackRadius = 50.0f;
-
+	
 	AIControllerClass = ADollAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
@@ -52,7 +52,7 @@ void ADoll::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	if (!IsPlayerControlled()) {
-		GetCharacterMovement()->MaxWalkSpeed = 300.0f;
+		GetCharacterMovement()->MaxWalkSpeed = 600.0f;
 	}
 }
 
