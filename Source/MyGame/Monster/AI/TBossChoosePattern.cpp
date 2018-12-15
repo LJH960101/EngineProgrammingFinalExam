@@ -30,10 +30,10 @@ EBTNodeResult::Type UTBossChoosePattern::ExecuteTask(UBehaviorTreeComponent& Own
 	uint8 maxPattern = 5U;
 	if (boss->HPComponent->GetHpRate() <= 0.5f) maxPattern = 7U;
 
-	// 20%의 확률로 특별 패턴 시행
-	if (FMath::RandRange(0, 5) == 1)
+	// 33%의 확률로 특별 패턴 시행
+	if (FMath::RandRange(0, 2) == 1)
 	{
-		boss->SetPattern((EBossPattern)FMath::RandRange(1, maxPattern));
+		boss->SetPattern((EBossPattern)FMath::RandRange(3, maxPattern));
 	}
 	else {
 		if (FMath::RandRange(0, 2)==1) boss->SetPattern(EBossPattern::BP_BasicAttack1);

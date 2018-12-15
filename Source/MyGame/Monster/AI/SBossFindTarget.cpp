@@ -64,6 +64,5 @@ void USBossFindTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMe
 		OwnerComp.GetBlackboardComponent()->SetValueAsObject(ABossAIController::MinTargetKey, nullptr);
 		OwnerComp.GetBlackboardComponent()->SetValueAsObject(ABossAIController::MaxTargetKey, nullptr);
 	}
-
 	DrawDebugSphere(World, Center, DetectRadius, 16, FColor::Red, false, 0.2f);
 }

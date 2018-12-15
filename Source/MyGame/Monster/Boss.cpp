@@ -117,7 +117,7 @@ EBossPattern ABoss::GetCurrentPattern()
 void ABoss::BeginPlay()
 {
 	Super::BeginPlay();
-	HPComponent->SetMaxHP(100.0f);
+	HPComponent->SetMaxHP(300.0f);
 }
 
 // Called every frame
@@ -193,6 +193,7 @@ void ABoss::BindAnimationEvents()
 	{
 		MyAnim->GatheringStart.AddLambda([this]() -> void {
 			HPComponent->HealHP(10.0f);
+			OnBossHpChanged.Broadcast();
 			TArray<AActor*> actors;
 			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADoll::StaticClass(), actors);
 			for (auto actor : actors)
@@ -216,6 +217,7 @@ void ABoss::BindAnimationEvents()
 			float dist = FVector::Dist(doll->GetActorLocation(), playerCharacter->GetActorLocation());
 			if (dist >= 500.f) {
 				HPComponent->HealHP(50.0f);
+				OnBossHpChanged.Broadcast();
 				FDamageEvent newEvent;
 				playerCharacter->TakeDamage(20.f, newEvent, GetController(), this);
 				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), GatheringFailParticle, playerCharacter->GetActorLocation());

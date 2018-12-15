@@ -21,6 +21,9 @@ private:
 	bool IsAttacking;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
+	bool IsHitting;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 	bool IsDie;
 
 	UPROPERTY()
@@ -52,6 +55,9 @@ private:
 
 	UPROPERTY()
 	class ADoll* sommonedDoll;
+
+	UPROPERTY()
+	class USoundWave* ControlDollSound;
 
 public:
 	UPROPERTY(VisibleAnywhere, Category = UI)
@@ -100,4 +106,5 @@ public:
 
 	bool OnDash();
 	bool OnDie();
+	bool OnHit();
 };

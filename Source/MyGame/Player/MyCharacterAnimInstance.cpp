@@ -27,6 +27,7 @@ void UMyCharacterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 			IsInAir = Character->GetMovementComponent()->IsFalling();
 			IsInDash = Character->OnDash();
 			IsDie = Character->OnDie();
+			IsHitting = Character->OnHit();
 		}
 	}
 }
@@ -55,6 +56,11 @@ void UMyCharacterAnimInstance::AnimNotify_Attack()
 void UMyCharacterAnimInstance::AnimNotify_DashEnd()
 {
 	OnDashEnd.Broadcast();
+}
+
+void UMyCharacterAnimInstance::AnimNotify_HitEnd()
+{
+	OnHitEnd.Broadcast();
 }
 
 FName UMyCharacterAnimInstance::GetAttackMontageSectionName(int32 Section)

@@ -57,7 +57,6 @@ void UBTService_Detect::TickNode(UBehaviorTreeComponent & OwnerComp, uint8 * Nod
 
 					OwnerComp.GetBlackboardComponent()->SetValueAsObject(ADollAIController::TargetKey, monster);
 					DrawDebugSphere(World, Center, DetectRadius, 16, FColor::Green, false, 0.2f);
-
 					DrawDebugPoint(World, monster->GetActorLocation(), 10.0f, FColor::Blue, false, 0.2f);
 					DrawDebugLine(World, ControllingPawn->GetActorLocation(), monster->GetActorLocation(), FColor::Blue, false, 0.27f);
 					return;

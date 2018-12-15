@@ -41,8 +41,8 @@ void ABossTonado::BeginPlay()
 	SetActorScale3D(FVector(2.0f, 2.0f, 2.0f));
 }
 
-const float Damage = 5.0f;
-const float AttackTime = 0.5f;
+const float Damage = 10.0f;
+const float AttackTime = 2.0f;
 const float height = 150.0f;
 const float radius = 150.0f;
 const float speed = 200.0f;

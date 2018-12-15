@@ -9,6 +9,7 @@
 DECLARE_MULTICAST_DELEGATE(FOnNextAttackCheckDelegate);
 DECLARE_MULTICAST_DELEGATE(FOnAttackDelegate);
 DECLARE_MULTICAST_DELEGATE(FOnDashEndDelegate);
+DECLARE_MULTICAST_DELEGATE(FOnHitEndDelegate);
 
 /**
  * 
@@ -32,6 +33,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 	bool IsDie;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
+	bool IsHitting;
+
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category=Attack, Meta=(AllowPrivateAccess = true))
 	UAnimMontage* AttackMontage;
 
@@ -39,6 +43,7 @@ public:
 	FOnNextAttackCheckDelegate OnNextAttackCheck;
 	FOnAttackDelegate OnAttack;
 	FOnDashEndDelegate OnDashEnd;
+	FOnHitEndDelegate OnHitEnd;
 
 	//Method
 public:
@@ -56,6 +61,9 @@ private:
 
 	UFUNCTION()
 	void AnimNotify_DashEnd();
+
+	UFUNCTION()
+	void AnimNotify_HitEnd();
 
 	FName GetAttackMontageSectionName(int32 Section);
 };

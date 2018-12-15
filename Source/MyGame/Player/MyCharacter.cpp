@@ -58,7 +58,7 @@ AMyCharacter::AMyCharacter()
 	}
 	else MYLOG(Warning, TEXT("Failed to load UI_HPBAR"));
 
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_PHASE(TEXT("/Game/ParagonPhase/Characters/Heroes/Phase/Meshes/Phase_GDC.Phase_GDC"));
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_PHASE(TEXT("/Game/ParagonPhase/Characters/Heroes/Phase/Skins/Tier_1_5/Kitty/Meshes/Phase_Kitty_GDC.Phase_Kitty_GDC"));
 	if (SK_PHASE.Succeeded()) {
 		GetMesh()->SetSkeletalMesh(SK_PHASE.Object);
 	}
@@ -75,6 +75,12 @@ AMyCharacter::AMyCharacter()
 		GetMesh()->SetAnimInstanceClass(AB_PHASE.Class);
 	}
 	else MYLOG(Warning, TEXT("Failed to find AB_PHASE"));
+
+	static ConstructorHelpers::FObjectFinder<USoundWave> SW_CONTROL(TEXT("/Game/ParagonPhase/Characters/Heroes/Phase/Sounds/SoundWaves/Phase_Ability_LMB_Engage_030.Phase_Ability_LMB_Engage_030"));
+	if (SW_CONTROL.Succeeded()) {
+		ControlDollSound = SW_CONTROL.Object;
+	}
+	else MYLOG(Warning, TEXT("Failed to find SW_CONTROL"));
 	
 	// 필드를 설정
 	IsAttacking = false;
@@ -207,13 +213,18 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, AController * EventInstigator, AActor * DamageCauser)
 {
-	MYLOG_S(Warning);
+	IsAttacking = false;
+	IsDashing = false;
+	AttackEndComboState();
+	IsHitting = true;
+	DisableInput(Cast<APlayerController>(GetController()));
+
 	return HpComponent->TakeDamage(DamageAmount);
 }
 
+// 인형을 조정함
 void AMyCharacter::ControlDoll()
 {
-	if (sommonedDoll->GetControlMoveState()) return;
 	auto playerController = Cast<APlayerController>(GetController());
 	if (!playerController) return;
 	FVector startPoint = playerController->GetFocalLocation();
@@ -239,6 +250,7 @@ void AMyCharacter::ControlDoll()
 	sommonedDoll->SetControlLocation(hitResult.Location);
 	sommonedDoll->SetControlMoveState(true);
 	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ControlParticle, hitResult.Location, FRotator::ZeroRotator, true);
+	UGameplayStatics::PlaySound2D(GetWorld(), ControlDollSound);
 }
 
 void AMyCharacter::Test()
@@ -272,6 +284,11 @@ bool AMyCharacter::OnDie()
 	return IsDie;
 }
 
+bool AMyCharacter::OnHit()
+{
+	return IsHitting;
+}
+
 void AMyCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -279,7 +296,6 @@ void AMyCharacter::PostInitializeComponents()
 	MYCHECK(nullptr != MyAnim);
 
 	MyAnim->OnMontageEnded.AddDynamic(this, &AMyCharacter::OnAttackMontageEnded);
-
 
 	// 다음 공격 람다 캐스팅
 	MyAnim->OnNextAttackCheck.AddLambda([this]() -> void {
@@ -289,6 +305,12 @@ void AMyCharacter::PostInitializeComponents()
 			AttackStartComboState();
 			MyAnim->JumpToAttackMontageSection(CurrentCombo);
 		}
+	});
+
+	// 다음 공격 람다 캐스팅
+	MyAnim->OnHitEnd.AddLambda([this]() -> void {
+		EnableInput(Cast<APlayerController>(GetController()));
+		IsHitting = false;
 	});
 
 	// 죽음 함수 바인딩
