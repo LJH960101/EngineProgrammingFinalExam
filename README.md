@@ -29,5 +29,7 @@
 7. TransLocation : 인형과 위치를 바꿈.
 ```
 
+영상 : https://youtu.be/6wFDJPfbUck
+
 ### 201413151 이장형
 ### 8/12/2018 ~ 16/12/2018
