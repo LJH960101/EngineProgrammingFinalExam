@@ -23,6 +23,7 @@ void UTBoss_WaitUntillEnd::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* No
 	auto boss = Cast<ABoss>(OwnerComp.GetAIOwner()->GetPawn());
 	MYCHECK(boss != nullptr);
 	if (boss->OnAttack() == false) {
+		// 보스의 공격이 끝났다면 종료 처리.
 		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 	}
 }

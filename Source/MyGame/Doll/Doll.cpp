@@ -8,6 +8,7 @@
 #include "Components/WidgetComponent.h"
 #include "Doll/DollWeapon.h"
 #include "Doll/DollAIController.h"
+#include "Doll/DollStatComponent.h"
 #include "Player/MyCharacter.h"
 
 
@@ -30,6 +31,7 @@ ADoll::ADoll()
 	PrimaryActorTick.bCanEverTick = true;
 
 	HpComponent = CreateDefaultSubobject<UHPComponent>(TEXT("HpComponent"));
+	StatComponent = CreateDefaultSubobject<UDollStatComponent>(TEXT("Stat Component"));
 
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
 
@@ -72,7 +74,7 @@ void ADoll::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	if (!IsPlayerControlled()) {
-		GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+		GetCharacterMovement()->MaxWalkSpeed = StatComponent->GetWalkSpeed();
 	}
 }
 
@@ -82,7 +84,10 @@ void ADoll::BeginPlay()
 	Super::BeginPlay();
 	auto NewWeapon = GetWorld()->SpawnActor<ADollWeapon>(ADollWeapon::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator);
 	SetWeapon(NewWeapon);
-	HpComponent->SetMaxHP(100000.0f);
+	HpComponent->SetMaxHP(StatComponent->GetMaxHP());
+
+	AttackRange = StatComponent->GetAttackRange();
+	AttackRadius = StatComponent->GetAttackRadius();
 }
 
 void ADoll::SetControlLocation(const FVector & location)

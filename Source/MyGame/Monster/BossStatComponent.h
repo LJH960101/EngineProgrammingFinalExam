@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+#include "MyGame.h"
 #include "Components/ActorComponent.h"
 #include "BossStatComponent.generated.h"
 
@@ -11,6 +11,9 @@ UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class MYGAME_API UBossStatComponent : public UActorComponent
 {
 	GENERATED_BODY()
+	
+private:
+	struct FBossData* StatData = nullptr;
 			   
 public:	
 	// Sets default values for this component's properties
@@ -19,10 +22,21 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+	virtual void InitializeComponent() override;
 
 public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-		
+	float GetMaxHp();
+	float GetDetectRadius();
+	float GetPatternRate();
+	float GetWalkSpeed();
+	float GetBasicAttackHeight();
+	float GetBasicAttackRadius();
+	float GetBasicAttackDamage();
+	float GetJumpingDamage();
+	float GetGatheringStartHeal();
+	float GetGatheringEndHeal();
+	float GetGatheringDist();
+	float GetGatheringDamage();
+	float GetScatterDist();
+	float GetScatterDamage();
 };

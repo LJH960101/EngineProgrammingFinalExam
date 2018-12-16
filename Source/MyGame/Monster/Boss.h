@@ -18,7 +18,8 @@ enum class EBossPattern : uint8
 	BP_Jumping 	UMETA(DisplayName = "Jumping"),
 	BP_HeartShare 	UMETA(DisplayName = "Heart Share"),
 	BP_TransLocation 	UMETA(DisplayName = "TransLocation"),
-	BP_Tonado 	UMETA(DisplayName = "Tonado")
+	BP_Tonado 	UMETA(DisplayName = "Tonado"),
+	BP_MAX 	UMETA(DisplayName = "MAX")
 };
 
 DECLARE_MULTICAST_DELEGATE(FOnBossHpChanged);
@@ -32,11 +33,12 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = Stat)
 	class UHPComponent* HPComponent;
 
+	UPROPERTY(VisibleAnywhere, Category = Stat)
+	class UBossStatComponent* StatComponent;
+
 private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 	EBossPattern CurrentPattern;
-
-	class UBossStatComponent* StatComponent;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 	bool IsDie;
@@ -45,27 +47,31 @@ private:
 	class UBossAnimInstance* MyAnim;
 	bool bOnAttack;
 
-
+	// Pattern Particles
 	UPROPERTY()
 	UParticleSystem* JumpingParticle;
-
 	UPROPERTY()
 	UParticleSystem* GatheringParticle;
-
 	UPROPERTY()
 	UParticleSystem* GatheringFailParticle;
-
 	UPROPERTY()
 	UParticleSystem* ScatterParticle;
-
 	UPROPERTY()
 	UParticleSystem* ScatterImpactParticle;
-
 	UPROPERTY()
 	UParticleSystem* HeartShareParticle;
 private:
 	void Die();
 	void BindAnimationEvents();
+	void BasicAttack();
+	void Jumping();
+	void GatheringStart();
+	void GatheringEnd();
+	void ScatterStart();
+	void ScatterEnd();
+	void TransLocation();
+	void Tonado();
+	void HeartShare();
 
 protected:
 	// Called when the game starts or when spawned

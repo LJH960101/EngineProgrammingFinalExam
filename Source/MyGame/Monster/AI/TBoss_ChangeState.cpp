@@ -16,6 +16,7 @@ EBTNodeResult::Type UTBoss_ChangeState::ExecuteTask(UBehaviorTreeComponent& Owne
 {
 	Super::ExecuteTask(OwnerComp, NodeMemory);
 
+	// 보스의 패턴을 NotAttack으로 바꾼다.
 	ABoss* boss = Cast<ABoss>(OwnerComp.GetAIOwner()->GetPawn());
 	if (boss == nullptr) return EBTNodeResult::Failed;
 	boss->SetPattern(EBossPattern::BP_NotAttacking);

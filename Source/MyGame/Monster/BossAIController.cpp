@@ -39,6 +39,7 @@ void ABossAIController::ChangeOnAttack(bool isOn)
 
 void ABossAIController::TransTarget()
 {
+	// 두 BB값을 바꾼다.
 	auto minTarget = Blackboard->GetValueAsObject(MinTargetKey);
 	Blackboard->SetValueAsObject(MinTargetKey, Blackboard->GetValueAsObject(MaxTargetKey));
 	Blackboard->SetValueAsObject(MaxTargetKey, minTarget);

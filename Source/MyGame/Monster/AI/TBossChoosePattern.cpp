@@ -3,6 +3,7 @@
 #include "TBossChoosePattern.h"
 #include "Monster/BossAIController.h"
 #include "Monster/Boss.h"
+#include "Monster/BossStatComponent.h"
 #include "Common/HPComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
@@ -27,16 +28,16 @@ EBTNodeResult::Type UTBossChoosePattern::ExecuteTask(UBehaviorTreeComponent& Own
 	}
 
 	// 보스의 체력으로 최대 패턴 수를 정한다.
-	uint8 maxPattern = 5U;
-	if (boss->HPComponent->GetHpRate() <= 0.5f) maxPattern = 7U;
+	uint8 maxPattern = (uint8)EBossPattern::BP_Jumping;
+	if (boss->HPComponent->GetHpRate() <= 0.5f) maxPattern = (uint8)EBossPattern::BP_MAX - 1;
 
 	// 33%의 확률로 특별 패턴 시행
-	if (FMath::RandRange(0, 2) == 1)
+	if (FMath::RandRange(0, (int)boss->StatComponent->GetPatternRate()) == 1)
 	{
 		boss->SetPattern((EBossPattern)FMath::RandRange(3, maxPattern));
 	}
 	else {
-		if (FMath::RandRange(0, 2)==1) boss->SetPattern(EBossPattern::BP_BasicAttack1);
+		if (FMath::RandRange(0, 1)==1) boss->SetPattern(EBossPattern::BP_BasicAttack1);
 		else boss->SetPattern(EBossPattern::BP_BasicAttack2);
 	}
 

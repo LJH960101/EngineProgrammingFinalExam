@@ -6,6 +6,7 @@
 #include "Monster/Monster.h"
 #include "Monster/Boss.h"
 #include "Monster/BossAIController.h"
+#include "Monster/BossStatComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "DrawDebugHelpers.h"
 
@@ -22,11 +23,16 @@ void USBossFindTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMe
 	APawn* ControllingPawn = OwnerComp.GetAIOwner()->GetPawn();
 	if (nullptr == ControllingPawn) return;
 
+	auto boss = Cast<ABoss>(ControllingPawn);
+	if (boss == nullptr) return;
+
 	UWorld* World = ControllingPawn->GetWorld();
 	FVector Center = ControllingPawn->GetActorLocation();
-	float DetectRadius = 2500.0f;
+	float DetectRadius = boss->StatComponent->GetDetectRadius();
 
 	if (nullptr == World) return;
+
+	// 구체 충돌 판정 실행
 	TArray<FOverlapResult> OverlapResults;
 	FCollisionQueryParams CollisionQueryParam(NAME_None, false, ControllingPawn);
 	bool bResult = World->OverlapMultiByChannel(
@@ -45,6 +51,7 @@ void USBossFindTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMe
 		for (auto OverlapResult : OverlapResults)
 		{
 			if (Cast<IPC>(OverlapResult.GetActor()) == nullptr) continue;
+			// PC측 캐릭터가 있다면? 최대 최소값 갱신
 			float dist = FVector::Dist(OwnerComp.GetOwner()->GetActorLocation(),
 				OverlapResult.GetActor()->GetActorLocation());
 			if (dist > maxDis) {
@@ -56,11 +63,13 @@ void USBossFindTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMe
 				minAct = OverlapResult.GetActor();
 			}
 		}
+		// 최대 최소값으로 BB값을 갱신
 		OwnerComp.GetBlackboardComponent()->SetValueAsObject(ABossAIController::MinTargetKey, Cast<ACharacter>(minAct));
 		OwnerComp.GetBlackboardComponent()->SetValueAsObject(ABossAIController::MaxTargetKey, Cast<ACharacter>(maxAct));
 	}
 	else
 	{
+		// 탐지하지 못했다면 nullptr로 바꾼다.
 		OwnerComp.GetBlackboardComponent()->SetValueAsObject(ABossAIController::MinTargetKey, nullptr);
 		OwnerComp.GetBlackboardComponent()->SetValueAsObject(ABossAIController::MaxTargetKey, nullptr);
 	}

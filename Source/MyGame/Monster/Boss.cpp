@@ -5,7 +5,7 @@
 #include "Monster/BossAIController.h"
 #include "Monster/BossAnimInstance.h"
 #include "Monster/BossStatComponent.h"
-#include "Monster/BossTonado.h"
+#include "Object/BossTonado.h"
 #include "Player/MyCharacter.h"
 #include "Player/PC.h"
 #include "Doll/Doll.h"
@@ -117,7 +117,8 @@ EBossPattern ABoss::GetCurrentPattern()
 void ABoss::BeginPlay()
 {
 	Super::BeginPlay();
-	HPComponent->SetMaxHP(300.0f);
+	HPComponent->SetMaxHP(StatComponent->GetMaxHp());
+	GetCharacterMovement()->MaxWalkSpeed = StatComponent->GetWalkSpeed();
 }
 
 // Called every frame
@@ -142,182 +143,15 @@ void ABoss::Die()
 
 void ABoss::BindAnimationEvents()
 {
-	// 기본 공격 바인딩
-	{
-		MyAnim->BasicAttack.AddLambda([this]() -> void {
-			const float height = 300.0f;
-			const float radius = 300.0f;
-			TArray<FHitResult> HitResults;
-			FCollisionQueryParams Params(NAME_None, false, this);
-			bool bResult = GetWorld()->SweepMultiByChannel(
-				HitResults,
-				GetActorLocation(),
-				GetActorLocation() + GetActorForwardVector() * height,
-				FQuat::Identity,
-				ECollisionChannel::ECC_Pawn,
-				FCollisionShape::MakeSphere(radius),
-				Params);
-
-			if (bResult)
-			{
-				for (auto HitResult : HitResults) {
-					if (HitResult.Actor.IsValid())
-					{
-						if (Cast<IPC>(HitResult.Actor) == nullptr) continue;
-						FDamageEvent DamageEvent;
-						HitResult.Actor->TakeDamage(5.0f, DamageEvent, GetController(), this);
-					}
-				}
-			}
-		});
-	}
-
-	// 점프 공격 바인딩
-	{
-		MyAnim->Jumping.AddLambda([this]() -> void {
-			TArray<AActor*> actors;
-			AMyCharacter* playerCharacter = Cast<AMyCharacter>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetPawn());
-			MYCHECK(playerCharacter != nullptr);
-			FVector spawnLocation = playerCharacter->GetActorLocation();
-			spawnLocation.Z = 0.f;
-			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), JumpingParticle, spawnLocation, FRotator::ZeroRotator, true);
-			if (playerCharacter->GetCharacterMovement()->IsMovingOnGround()) {
-				FDamageEvent DamageEvent;
-				playerCharacter->TakeDamage(10.f, DamageEvent, GetController(), this);
-			}
-		}
-		);
-	}
-
-	// 게더링 시작 바인딩
-	{
-		MyAnim->GatheringStart.AddLambda([this]() -> void {
-			HPComponent->HealHP(10.0f);
-			OnBossHpChanged.Broadcast();
-			TArray<AActor*> actors;
-			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADoll::StaticClass(), actors);
-			for (auto actor : actors)
-			{
-				UGameplayStatics::SpawnEmitterAttached(GatheringParticle, actor->GetRootComponent(), TEXT("Particle"), FVector(0.0f, 0.0f, -50.0f), FRotator::ZeroRotator);
-			}
-		}
-		);
-	}
-
-	// 게더링 종료 바인딩
-	{
-		MyAnim->GatheringEnd.AddLambda([this]() -> void {
-			AMyCharacter* playerCharacter = Cast<AMyCharacter>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetPawn());
-			MYCHECK(playerCharacter != nullptr);
-			TArray<AActor*> actors;
-			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADoll::StaticClass(), actors);
-			MYCHECK(actors.Num() > 0);
-			ADoll* doll = Cast<ADoll>(actors[0]);
-			MYCHECK(doll != nullptr);
-			float dist = FVector::Dist(doll->GetActorLocation(), playerCharacter->GetActorLocation());
-			if (dist >= 500.f) {
-				HPComponent->HealHP(50.0f);
-				OnBossHpChanged.Broadcast();
-				FDamageEvent newEvent;
-				playerCharacter->TakeDamage(20.f, newEvent, GetController(), this);
-				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), GatheringFailParticle, playerCharacter->GetActorLocation());
-			}
-		}
-		);
-	}
-
-	// 스캐터 시작 바인딩
-	{
-		MyAnim->ScatterStart.AddLambda([this]() -> void {
-			TArray<AActor*> actors;
-			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADoll::StaticClass(), actors);
-			for (auto actor : actors)
-			{
-				UGameplayStatics::SpawnEmitterAttached(ScatterParticle, actor->GetRootComponent(), TEXT("Particle"), FVector(0.0f, 0.0f, 100.0f), FRotator::ZeroRotator);
-			}
-		}
-		);
-	}
-
-	// 스캐터 종료 바인딩
-	{
-		MyAnim->ScatterEnd.AddLambda([this]() -> void {
-			TArray<AActor*> actors;
-			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADoll::StaticClass(), actors);
-			FTransform newTransform = FTransform::Identity;
-			newTransform.SetScale3D(FVector(5.0f, 5.0f, 5.0f));
-			for (auto actor : actors)
-			{
-				newTransform.SetLocation(actor->GetActorLocation() - FVector(0.0f, 0.0f, 70.0f));
-				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ScatterImpactParticle,
-					newTransform);
-			}
-
-			AMyCharacter* playerCharacter = Cast<AMyCharacter>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetPawn());
-			MYCHECK(playerCharacter != nullptr);
-
-			ADoll* doll = Cast<ADoll>(actors[0]);
-			MYCHECK(doll != nullptr);
-
-			float dist = FVector::Dist(doll->GetActorLocation(), playerCharacter->GetActorLocation());
-
-			if (dist <= 800.f) {
-				FDamageEvent newEvent;
-				playerCharacter->TakeDamage(20.f, newEvent, GetController(), this);
-			}
-		}
-		);
-	}
-
-	// 위치변환기 바인딩
-	{
-		MyAnim->TransLocation.AddLambda([this]() -> void {
-			TArray<AActor*> actors;
-			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADoll::StaticClass(), actors);
-
-			AMyCharacter* playerCharacter = Cast<AMyCharacter>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetPawn());
-			MYCHECK(playerCharacter != nullptr);
-
-			ADoll* doll = Cast<ADoll>(actors[0]);
-			MYCHECK(doll != nullptr);
-			
-			FVector dollLocation = doll->GetActorLocation();
-			doll->SetActorLocation(playerCharacter->GetActorLocation());
-			playerCharacter->SetActorLocation(dollLocation);
-
-			auto aiController = Cast<ABossAIController>(GetController());
-			MYCHECK(aiController != nullptr);
-			aiController->TransTarget();
-		}
-		);
-	}
-
-	// 토네이도 바인딩
-	{
-		MyAnim->Tonado.AddLambda([this]() -> void {
-			GetWorld()->SpawnActor<ABossTonado>(ABossTonado::StaticClass(), GetActorLocation(), FRotator::ZeroRotator);
-		}
-		);
-	}
-
-	// 체력 쉐어 바인딩
-	{
-		MyAnim->HeartShare.AddLambda([this]() -> void {
-			AMyCharacter* playerCharacter = Cast<AMyCharacter>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetPawn());
-			MYCHECK(playerCharacter != nullptr);
-
-			TArray<AActor*> actors;
-			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADoll::StaticClass(), actors);
-			for (auto actor : actors)
-			{
-				UGameplayStatics::SpawnEmitterAttached(HeartShareParticle, actor->GetRootComponent(), TEXT("Particle"), FVector(0.0f, 0.0f, 150.0f), FRotator::ZeroRotator);
-				auto doll = Cast<ADoll>(actor);
-				if (doll != nullptr) doll->ActiveHeartShare();
-			}
-			UGameplayStatics::SpawnEmitterAttached(HeartShareParticle, playerCharacter->GetRootComponent(), TEXT("Particle"), FVector(0.0f, 0.0f, 150.0f), FRotator::ZeroRotator);
-		}
-		);
-	}
+	MyAnim->BasicAttack.AddUObject(this, &ABoss::BasicAttack);
+	MyAnim->Jumping.AddUObject(this, &ABoss::Jumping);
+	MyAnim->GatheringStart.AddUObject(this, &ABoss::GatheringStart);
+	MyAnim->GatheringEnd.AddUObject(this, &ABoss::GatheringEnd);
+	MyAnim->ScatterStart.AddUObject(this, &ABoss::ScatterStart);
+	MyAnim->ScatterEnd.AddUObject(this, &ABoss::ScatterEnd);
+	MyAnim->TransLocation.AddUObject(this, &ABoss::TransLocation);
+	MyAnim->Tonado.AddUObject(this, &ABoss::Tonado);
+	MyAnim->HeartShare.AddUObject(this, &ABoss::HeartShare);
 }
 void ABoss::PostInitializeComponents()
 {
@@ -336,4 +170,161 @@ float ABoss::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, AC
 	float hp = HPComponent->TakeDamage(DamageAmount);
 	OnBossHpChanged.Broadcast();
 	return hp;
+}
+
+void ABoss::BasicAttack()
+{
+	// 구체 충돌 체크로, IPC 타입의 액터들에게 공격을 가한다.
+	TArray<FHitResult> HitResults;
+	FCollisionQueryParams Params(NAME_None, false, this);
+	bool bResult = GetWorld()->SweepMultiByChannel(
+		HitResults,
+		GetActorLocation(),
+		GetActorLocation() + GetActorForwardVector() * StatComponent->GetBasicAttackHeight(),
+		FQuat::Identity,
+		ECollisionChannel::ECC_Pawn,
+		FCollisionShape::MakeSphere(StatComponent->GetBasicAttackRadius()),
+		Params);
+
+	if (bResult)
+	{
+		for (auto HitResult : HitResults) {
+			if (HitResult.Actor.IsValid())
+			{
+				if (Cast<IPC>(HitResult.Actor) == nullptr) continue;
+				FDamageEvent DamageEvent;
+				HitResult.Actor->TakeDamage(StatComponent->GetBasicAttackDamage(), DamageEvent, GetController(), this);
+			}
+		}
+	}
+}
+
+void ABoss::Jumping()
+{
+	// 캐릭터의 아래에 파티클을 발산하고, 캐릭터가 점프중이라면 피해를 입힌다.
+	TArray<AActor*> actors;
+	AMyCharacter* playerCharacter = Cast<AMyCharacter>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetPawn());
+	MYCHECK(playerCharacter != nullptr);
+	FVector spawnLocation = playerCharacter->GetActorLocation();
+	spawnLocation.Z = 0.f;
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), JumpingParticle, spawnLocation, FRotator::ZeroRotator, true);
+	if (playerCharacter->GetCharacterMovement()->IsMovingOnGround()) {
+		FDamageEvent DamageEvent;
+		playerCharacter->TakeDamage(StatComponent->GetJumpingDamage(), DamageEvent, GetController(), this);
+	}
+}
+
+void ABoss::GatheringStart()
+{
+	// 인형 위에 파티클을 Attach하고, 체력을 회복한다.
+	HPComponent->HealHP(StatComponent->GetGatheringStartHeal());
+	OnBossHpChanged.Broadcast();
+	TArray<AActor*> actors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADoll::StaticClass(), actors);
+	for (auto actor : actors)
+	{
+		UGameplayStatics::SpawnEmitterAttached(GatheringParticle, actor->GetRootComponent(), TEXT("Particle"), FVector(0.0f, 0.0f, -50.0f), FRotator::ZeroRotator);
+	}
+}
+
+void ABoss::GatheringEnd()
+{
+	// 인형과의 거리가 일정 수치 이상이라면 피해를 입히고 체력을 회복한다.
+	AMyCharacter* playerCharacter = Cast<AMyCharacter>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetPawn());
+	MYCHECK(playerCharacter != nullptr);
+	TArray<AActor*> actors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADoll::StaticClass(), actors);
+	MYCHECK(actors.Num() > 0);
+	ADoll* doll = Cast<ADoll>(actors[0]);
+	MYCHECK(doll != nullptr);
+	float dist = FVector::Dist(doll->GetActorLocation(), playerCharacter->GetActorLocation());
+	if (dist >= StatComponent->GetGatheringDist()) {
+		HPComponent->HealHP(StatComponent->GetGatheringEndHeal());
+		OnBossHpChanged.Broadcast();
+		FDamageEvent newEvent;
+		playerCharacter->TakeDamage(StatComponent->GetGatheringDamage(), newEvent, GetController(), this);
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), GatheringFailParticle, playerCharacter->GetActorLocation());
+	}
+}
+
+void ABoss::ScatterStart()
+{
+	// 인형 위에 파티클을 Attach한다.
+	TArray<AActor*> actors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADoll::StaticClass(), actors);
+	for (auto actor : actors)
+	{
+		UGameplayStatics::SpawnEmitterAttached(ScatterParticle, actor->GetRootComponent(), TEXT("Particle"), FVector(0.0f, 0.0f, 100.0f), FRotator::ZeroRotator);
+	}
+}
+
+void ABoss::ScatterEnd()
+{
+	// 인형에게 파티클을 발산하고, 일정 거리 이하라면 피해를 입힌다.
+	TArray<AActor*> actors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADoll::StaticClass(), actors);
+	FTransform newTransform = FTransform::Identity;
+	newTransform.SetScale3D(FVector(5.0f, 5.0f, 5.0f));
+	for (auto actor : actors)
+	{
+		newTransform.SetLocation(actor->GetActorLocation() - FVector(0.0f, 0.0f, 70.0f));
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ScatterImpactParticle,
+			newTransform);
+	}
+
+	AMyCharacter* playerCharacter = Cast<AMyCharacter>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetPawn());
+	MYCHECK(playerCharacter != nullptr);
+
+	ADoll* doll = Cast<ADoll>(actors[0]);
+	MYCHECK(doll != nullptr);
+
+	float dist = FVector::Dist(doll->GetActorLocation(), playerCharacter->GetActorLocation());
+
+	if (dist <= StatComponent->GetScatterDist()) {
+		FDamageEvent newEvent;
+		playerCharacter->TakeDamage(StatComponent->GetScatterDamage(), newEvent, GetController(), this);
+	}
+}
+
+void ABoss::TransLocation()
+{
+	// 캐릭터와 인형의 위치를 바꾼다.
+	TArray<AActor*> actors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADoll::StaticClass(), actors);
+
+	AMyCharacter* playerCharacter = Cast<AMyCharacter>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetPawn());
+	MYCHECK(playerCharacter != nullptr);
+
+	ADoll* doll = Cast<ADoll>(actors[0]);
+	MYCHECK(doll != nullptr);
+
+	FVector dollLocation = doll->GetActorLocation();
+	doll->SetActorLocation(playerCharacter->GetActorLocation());
+	playerCharacter->SetActorLocation(dollLocation);
+
+	auto aiController = Cast<ABossAIController>(GetController());
+	MYCHECK(aiController != nullptr);
+	aiController->TransTarget();
+}
+
+void ABoss::Tonado()
+{
+	GetWorld()->SpawnActor<ABossTonado>(ABossTonado::StaticClass(), GetActorLocation(), FRotator::ZeroRotator);
+}
+
+void ABoss::HeartShare()
+{
+	// 캐릭터와 인형에게 파티클을 Attach하고, 인형의 HeartShare 킴을 요청한다.
+	AMyCharacter* playerCharacter = Cast<AMyCharacter>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetPawn());
+	MYCHECK(playerCharacter != nullptr);
+
+	TArray<AActor*> actors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADoll::StaticClass(), actors);
+	for (auto actor : actors)
+	{
+		UGameplayStatics::SpawnEmitterAttached(HeartShareParticle, actor->GetRootComponent(), TEXT("Particle"), FVector(0.0f, 0.0f, 150.0f), FRotator::ZeroRotator);
+		auto doll = Cast<ADoll>(actor);
+		if (doll != nullptr) doll->ActiveHeartShare();
+	}
+	UGameplayStatics::SpawnEmitterAttached(HeartShareParticle, playerCharacter->GetRootComponent(), TEXT("Particle"), FVector(0.0f, 0.0f, 150.0f), FRotator::ZeroRotator);
 }
